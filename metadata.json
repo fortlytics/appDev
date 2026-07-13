@@ -1,6 +1,6 @@
 {
   "name": "Academic Performance Management System",
-  "description": "An academic performance tracker and GPA/CGPA management system with rich analytics, semester comparison, and probation alerts, tailored for Nigerian polytechnics.",
+  "description": "An academic performance tracker and GPA/CGPA management system with student and admin logins, rich analytics, semester comparison, and AI-powered strategy advisement.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

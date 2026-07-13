@@ -24,13 +24,24 @@ class AcademicViewModel(application: Application) : AndroidViewModel(application
     private val sharedPrefs = application.getSharedPreferences("AcademicPortalPrefs", Context.MODE_PRIVATE)
     private val gson = Gson()
 
-    private val _studentState = mutableStateOf<Student>(getInitialStudent())
+    // Authentication States
+    private val _currentSession = mutableStateOf<UserSession?>(getSavedSession())
+    val currentSession: State<UserSession?> = _currentSession
+
+    private val _adminSelectedStudent = mutableStateOf<String?>(getSavedAdminSelectedStudent())
+    val adminSelectedStudent: State<String?> = _adminSelectedStudent
+
+    private val _allStudentsList = mutableStateOf<List<StudentCredential>>(emptyList())
+    val allStudentsList: State<List<StudentCredential>> = _allStudentsList
+
+    // Primary Academic States (bound to the active student)
+    private val _studentState = mutableStateOf<Student>(getGuestStudent())
     val studentState: State<Student> = _studentState
 
-    private val _semestersState = mutableStateOf<List<Semester>>(getInitialSemesters())
+    private val _semestersState = mutableStateOf<List<Semester>>(emptyList())
     val semestersState: State<List<Semester>> = _semestersState
 
-    private val _advisorAdvice = mutableStateOf<String>(getCachedAdvice())
+    private val _advisorAdvice = mutableStateOf<String>("")
     val advisorAdvice: State<String> = _advisorAdvice
 
     private val _loadingAdvisor = mutableStateOf(false)
@@ -39,88 +50,276 @@ class AcademicViewModel(application: Application) : AndroidViewModel(application
     private val _errorMessage = mutableStateOf<String?>(null)
     val errorMessage: State<String?> = _errorMessage
 
-    private fun getInitialStudent(): Student {
-        val studentJson = sharedPrefs.getString("student_profile", null)
-        return if (studentJson != null) {
-            gson.fromJson(studentJson, Student::class.java)
-        } else {
-            Student(
-                name = "Adebayo Kolawole",
-                matricNo = "FPO/ND/COM/24/089",
-                department = "Computer Science",
-                level = "ND II",
-                gradingSystem = GradingSystem.NBTE,
-                institution = "Federal Polytechnic Offa"
-            )
+    init {
+        loadCredentialsFromAssets()
+        syncStateWithSession()
+    }
+
+    private fun getGuestStudent(): Student {
+        return Student(
+            name = "Guest Student",
+            matricNo = "",
+            department = "",
+            level = "",
+            gradingSystem = GradingSystem.NBTE,
+            institution = ""
+        )
+    }
+
+    private fun loadCredentialsFromAssets() {
+        try {
+            val jsonStr = getApplication<Application>().assets.open("credentials.json").bufferedReader().use { it.readText() }
+            val fileData = gson.fromJson(jsonStr, CredentialsFile::class.java)
+            _allStudentsList.value = fileData.students
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
-    private fun getInitialSemesters(): List<Semester> {
-        val semestersJson = sharedPrefs.getString("semesters_records", null)
+    private fun getSavedSession(): UserSession? {
+        val sessionJson = sharedPrefs.getString("user_session", null)
+        return if (sessionJson != null) {
+            try {
+                gson.fromJson(sessionJson, UserSession::class.java)
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            null
+        }
+    }
+
+    private fun getSavedAdminSelectedStudent(): String? {
+        return sharedPrefs.getString("admin_selected_student", null)
+    }
+
+    fun syncStateWithSession() {
+        val session = _currentSession.value
+        if (session != null) {
+            val username = if (session.role == UserRole.ADMIN) {
+                _adminSelectedStudent.value ?: _allStudentsList.value.firstOrNull()?.username ?: ""
+            } else {
+                session.username
+            }
+            if (username.isNotEmpty()) {
+                _studentState.value = getStudentByUsername(username)
+                _semestersState.value = getSemestersByUsername(username)
+                _advisorAdvice.value = getCachedAdviceByUsername(username)
+            } else {
+                _studentState.value = getGuestStudent()
+                _semestersState.value = emptyList()
+                _advisorAdvice.value = ""
+            }
+        } else {
+            _studentState.value = getGuestStudent()
+            _semestersState.value = emptyList()
+            _advisorAdvice.value = ""
+        }
+    }
+
+    private fun getStudentByUsername(username: String): Student {
+        val studentJson = sharedPrefs.getString("student_profile_$username", null)
+        return if (studentJson != null) {
+            gson.fromJson(studentJson, Student::class.java)
+        } else {
+            val cred = _allStudentsList.value.find { it.username == username }
+            if (cred != null) {
+                Student(
+                    name = cred.name,
+                    matricNo = cred.matricNo,
+                    department = cred.department,
+                    level = cred.level,
+                    gradingSystem = cred.gradingSystem,
+                    institution = cred.institution
+                )
+            } else {
+                getGuestStudent()
+            }
+        }
+    }
+
+    private fun getSemestersByUsername(username: String): List<Semester> {
+        val semestersJson = sharedPrefs.getString("semesters_records_$username", null)
         if (semestersJson != null) {
             val type = object : TypeToken<List<Semester>>() {}.type
             return gson.fromJson(semestersJson, type)
         } else {
-            // Load Demo Data matching the React App
-            val system = GradingSystem.NBTE
+            val student = getStudentByUsername(username)
+            val system = student.gradingSystem
             
-            val sem1Courses = listOf(
-                Course(code = "COM 111", title = "Introduction to Computing", credits = 3, score = 78),
-                Course(code = "COM 112", title = "Digital Electronics", credits = 2, score = 68),
-                Course(code = "COM 113", title = "Computer Programming in BASIC", credits = 3, score = 72),
-                Course(code = "MTH 111", title = "Algebra", credits = 2, score = 58),
-                Course(code = "GNS 101", title = "Use of English I", credits = 2, score = 82)
-            ).map { c ->
+            // Default demo dataset loaded when a student logging in first time
+            val sem1Courses = if (system == GradingSystem.NBTE) {
+                listOf(
+                    Course(code = "COM 111", title = "Introduction to Computing", credits = 3, score = 78),
+                    Course(code = "COM 112", title = "Digital Electronics", credits = 2, score = 68),
+                    Course(code = "COM 113", title = "Computer Programming", credits = 3, score = 72),
+                    Course(code = "MTH 111", title = "Algebra", credits = 2, score = 58),
+                    Course(code = "GNS 101", title = "Use of English I", credits = 2, score = 82)
+                )
+            } else {
+                listOf(
+                    Course(code = "MTH 101", title = "General Mathematics I", credits = 4, score = 82),
+                    Course(code = "CHM 101", title = "General Chemistry I", credits = 4, score = 71),
+                    Course(code = "PHY 101", title = "General Physics I", credits = 4, score = 64),
+                    Course(code = "GST 111", title = "Communication in English I", credits = 2, score = 78)
+                )
+            }.map { c ->
                 val (grade, gp) = GradeUtils.computeGradeAndGp(c.score, system)
                 c.copy(grade = grade, gp = gp)
             }
             val sem1Gpa = GradeUtils.calculateGPA(sem1Courses, system)
 
-            val sem2Courses = listOf(
-                Course(code = "COM 121", title = "Scientific Programming with Fortran", credits = 3, score = 80),
-                Course(code = "COM 122", title = "Object-Oriented Programming", credits = 3, score = 75),
-                Course(code = "COM 123", title = "Data Structures & Algorithms", credits = 3, score = 62),
-                Course(code = "MTH 121", title = "Calculus", credits = 2, score = 48),
-                Course(code = "GNS 102", title = "Use of English II", credits = 2, score = 71)
-            ).map { c ->
+            val sem2Courses = if (system == GradingSystem.NBTE) {
+                listOf(
+                    Course(code = "COM 121", title = "Programming with Fortran", credits = 3, score = 80),
+                    Course(code = "COM 122", title = "Object-Oriented Programming", credits = 3, score = 75),
+                    Course(code = "COM 123", title = "Data Structures & Algorithms", credits = 3, score = 62),
+                    Course(code = "MTH 121", title = "Calculus", credits = 2, score = 48),
+                    Course(code = "GNS 102", title = "Use of English II", credits = 2, score = 71)
+                )
+            } else {
+                listOf(
+                    Course(code = "MTH 102", title = "General Mathematics II", credits = 4, score = 68),
+                    Course(code = "CHM 102", title = "General Chemistry II", credits = 4, score = 85),
+                    Course(code = "PHY 102", title = "General Physics II", credits = 4, score = 59),
+                    Course(code = "GST 112", title = "Logic & Philosophy", credits = 2, score = 73)
+                )
+            }.map { c ->
                 val (grade, gp) = GradeUtils.computeGradeAndGp(c.score, system)
                 c.copy(grade = grade, gp = gp)
             }
             val sem2Gpa = GradeUtils.calculateGPA(sem2Courses, system)
 
-            val sem3Courses = listOf(
-                Course(code = "COM 211", title = "Systems Analysis & Design", credits = 3, score = 85),
-                Course(code = "COM 212", title = "Database Design & Management", credits = 4, score = 76),
-                Course(code = "COM 213", title = "Operating Systems", credits = 3, score = 67),
-                Course(code = "COM 214", title = "Java Programming", credits = 3, score = 54),
-                Course(code = "EED 216", title = "Entrepreneurship Development", credits = 2, score = 73)
-            ).map { c ->
+            val sem3Courses = if (system == GradingSystem.NBTE) {
+                listOf(
+                    Course(code = "COM 211", title = "Systems Analysis & Design", credits = 3, score = 85),
+                    Course(code = "COM 212", title = "Database Design & Management", credits = 4, score = 76),
+                    Course(code = "COM 213", title = "Operating Systems", credits = 3, score = 67),
+                    Course(code = "COM 214", title = "Java Programming", credits = 3, score = 54),
+                    Course(code = "EED 216", title = "Entrepreneurship Development", credits = 2, score = 73)
+                )
+            } else {
+                listOf(
+                    Course(code = "COM 201", title = "Computer Programming I", credits = 3, score = 88),
+                    Course(code = "COM 203", title = "Database Systems", credits = 3, score = 79),
+                    Course(code = "MTH 211", title = "Linear Algebra", credits = 3, score = 61),
+                    Course(code = "GST 211", title = "Nigerian Peoples and Culture", credits = 2, score = 84)
+                )
+            }.map { c ->
                 val (grade, gp) = GradeUtils.computeGradeAndGp(c.score, system)
                 c.copy(grade = grade, gp = gp)
             }
             val sem3Gpa = GradeUtils.calculateGPA(sem3Courses, system)
 
             return listOf(
-                Semester(name = "ND I - 1st Semester", courses = sem1Courses, gpa = sem1Gpa),
-                Semester(name = "ND I - 2nd Semester", courses = sem2Courses, gpa = sem2Gpa),
-                Semester(name = "ND II - 1st Semester", courses = sem3Courses, gpa = sem3Gpa)
+                Semester(name = "1st Year - 1st Semester", courses = sem1Courses, gpa = sem1Gpa),
+                Semester(name = "1st Year - 2nd Semester", courses = sem2Courses, gpa = sem2Gpa),
+                Semester(name = "2nd Year - 1st Semester", courses = sem3Courses, gpa = sem3Gpa)
             )
         }
     }
 
-    private fun getCachedAdvice(): String {
-        return sharedPrefs.getString("advisor_advice", "") ?: ""
+    private fun getCachedAdviceByUsername(username: String): String {
+        return sharedPrefs.getString("advisor_advice_$username", "") ?: ""
+    }
+
+    private fun getActiveUsername(): String {
+        val session = _currentSession.value ?: return "guest"
+        return if (session.role == UserRole.ADMIN) {
+            _adminSelectedStudent.value ?: "guest"
+        } else {
+            session.username
+        }
     }
 
     private fun saveStudentProfile(student: Student) {
-        sharedPrefs.edit().putString("student_profile", gson.toJson(student)).apply()
-        _studentState.value = student
-        recalculateAllGPAs()
+        val username = getActiveUsername()
+        if (username != "guest") {
+            sharedPrefs.edit().putString("student_profile_$username", gson.toJson(student)).apply()
+            _studentState.value = student
+            recalculateAllGPAs()
+        }
     }
 
     private fun saveSemesters(semesters: List<Semester>) {
-        sharedPrefs.edit().putString("semesters_records", gson.toJson(semesters)).apply()
-        _semestersState.value = semesters
+        val username = getActiveUsername()
+        if (username != "guest") {
+            sharedPrefs.edit().putString("semesters_records_$username", gson.toJson(semesters)).apply()
+            _semestersState.value = semesters
+        }
+    }
+
+    fun login(usernameInput: String, passwordInput: String): Boolean {
+        try {
+            val jsonStr = getApplication<Application>().assets.open("credentials.json").bufferedReader().use { it.readText() }
+            val fileData = gson.fromJson(jsonStr, CredentialsFile::class.java)
+            
+            // Check students list
+            val matchedStudent = fileData.students.find { 
+                it.username.equals(usernameInput, ignoreCase = true) && it.password == passwordInput 
+            }
+            if (matchedStudent != null) {
+                val session = UserSession(
+                    username = matchedStudent.username,
+                    role = UserRole.STUDENT,
+                    displayName = matchedStudent.name
+                )
+                _currentSession.value = session
+                sharedPrefs.edit().putString("user_session", gson.toJson(session)).apply()
+                syncStateWithSession()
+                _errorMessage.value = null
+                return true
+            }
+
+            // Check admins list
+            val matchedAdmin = fileData.admins.find { 
+                it.username.equals(usernameInput, ignoreCase = true) && it.password == passwordInput 
+            }
+            if (matchedAdmin != null) {
+                val session = UserSession(
+                    username = matchedAdmin.username,
+                    role = UserRole.ADMIN,
+                    displayName = matchedAdmin.name
+                )
+                _currentSession.value = session
+                sharedPrefs.edit().putString("user_session", gson.toJson(session)).apply()
+                
+                if (_adminSelectedStudent.value == null) {
+                    val firstStudent = fileData.students.firstOrNull()?.username
+                    _adminSelectedStudent.value = firstStudent
+                    sharedPrefs.edit().putString("admin_selected_student", firstStudent).apply()
+                }
+                
+                syncStateWithSession()
+                _errorMessage.value = null
+                return true
+            }
+            
+            _errorMessage.value = "Invalid username or password"
+            return false
+        } catch (e: Exception) {
+            _errorMessage.value = "Authentication error: ${e.localizedMessage}"
+            return false
+        }
+    }
+
+    fun logout() {
+        _currentSession.value = null
+        _adminSelectedStudent.value = null
+        sharedPrefs.edit()
+            .remove("user_session")
+            .remove("admin_selected_student")
+            .apply()
+        _studentState.value = getGuestStudent()
+        _semestersState.value = emptyList()
+        _advisorAdvice.value = ""
+        _errorMessage.value = null
+    }
+
+    fun selectAdminStudent(username: String) {
+        _adminSelectedStudent.value = username
+        sharedPrefs.edit().putString("admin_selected_student", username).apply()
+        syncStateWithSession()
     }
 
     fun updateProfile(name: String, matricNo: String, department: String, level: String, system: GradingSystem) {
@@ -196,19 +395,29 @@ class AcademicViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun resetDemoData() {
-        sharedPrefs.edit().remove("student_profile").remove("semesters_records").remove("advisor_advice").apply()
-        _studentState.value = getInitialStudent()
-        _semestersState.value = getInitialSemesters()
-        _advisorAdvice.value = ""
-        _errorMessage.value = null
+        val username = getActiveUsername()
+        if (username != "guest") {
+            sharedPrefs.edit()
+                .remove("student_profile_$username")
+                .remove("semesters_records_$username")
+                .remove("advisor_advice_$username")
+                .apply()
+            _studentState.value = getStudentByUsername(username)
+            _semestersState.value = getSemestersByUsername(username)
+            _advisorAdvice.value = getCachedAdviceByUsername(username)
+            _errorMessage.value = null
+        }
     }
 
     fun clearAllData() {
-        val clearedStudent = _studentState.value.copy(name = "New Student", matricNo = "", department = "", level = "ND I")
-        saveStudentProfile(clearedStudent)
-        saveSemesters(emptyList())
-        sharedPrefs.edit().remove("advisor_advice").apply()
-        _advisorAdvice.value = ""
+        val username = getActiveUsername()
+        if (username != "guest") {
+            val clearedStudent = _studentState.value.copy(name = "New Student", matricNo = "", department = "", level = "ND I")
+            saveStudentProfile(clearedStudent)
+            saveSemesters(emptyList())
+            sharedPrefs.edit().remove("advisor_advice_$username").apply()
+            _advisorAdvice.value = ""
+        }
     }
 
     private fun recalculateAllGPAs() {
@@ -263,7 +472,6 @@ class AcademicViewModel(application: Application) : AndroidViewModel(application
             return
         }
 
-        // Construct academic summary prompt
         val transcriptBuilder = StringBuilder()
         transcriptBuilder.append("Student Profile:\n")
         transcriptBuilder.append("- Name: ${student.name}\n")
@@ -310,7 +518,10 @@ class AcademicViewModel(application: Application) : AndroidViewModel(application
                 val advice = callGeminiApi(apiKey, prompt)
                 if (advice != null) {
                     _advisorAdvice.value = advice
-                    sharedPrefs.edit().putString("advisor_advice", advice).apply()
+                    val username = getActiveUsername()
+                    if (username != "guest") {
+                        sharedPrefs.edit().putString("advisor_advice_$username", advice).apply()
+                    }
                 } else {
                     _errorMessage.value = "Failed to communicate with Gemini API. Please try again."
                 }

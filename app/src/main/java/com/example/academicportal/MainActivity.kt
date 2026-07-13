@@ -4,23 +4,33 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.academicportal.model.GradingSystem
+import com.example.academicportal.model.UserRole
 import com.example.academicportal.ui.*
 import com.example.academicportal.viewmodel.AcademicViewModel
 
@@ -31,7 +41,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             AcademicPortalTheme {
-                MainLayout(viewModel)
+                MainAppEntry(viewModel)
             }
         }
     }
@@ -44,10 +54,284 @@ fun AcademicPortalTheme(content: @Composable () -> Unit) {
             primary = Color(0xFF4F46E5),
             secondary = Color(0xFF818CF8),
             background = Color(0xFFF8FAFC),
-            surface = Color.White
+            surface = Color.White,
+            error = Color(0xFFDC2626)
         ),
         content = content
     )
+}
+
+@Composable
+fun MainAppEntry(viewModel: AcademicViewModel) {
+    val session by viewModel.currentSession
+
+    if (session == null) {
+        LoginScreen(
+            errorMessage = viewModel.errorMessage.value,
+            onLogin = { username, password -> viewModel.login(username, password) }
+        )
+    } else {
+        MainLayout(viewModel)
+    }
+}
+
+@Composable
+fun LoginScreen(
+    errorMessage: String?,
+    onLogin: (String, String) -> Boolean
+) {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var isPasswordVisible by remember { mutableStateOf(false) }
+    var selectedRoleTab by remember { mutableStateOf(0) } // 0 = Student, 1 = Admin
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF1F5F9)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Elegant App Logo & Title
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(Color(0xFF4F46E5), Color(0xFF818CF8))
+                        ),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.School,
+                    contentDescription = "Logo",
+                    tint = Color.White,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "ACADEMIC PORTAL",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFF1E1B4B),
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = "Verify your credentials to access records",
+                    fontSize = 12.sp,
+                    color = Color(0xFF64748B),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // Elevated Card containing the Login Form
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Role TabRow
+                    TabRow(
+                        selectedTabIndex = selectedRoleTab,
+                        containerColor = Color(0xFFF1F5F9),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        indicator = { Box(Modifier) }, // Hide default line indicator for clean bento pill style
+                        divider = { Box(Modifier) }
+                    ) {
+                        val tabs = listOf("Student", "Administrator")
+                        tabs.forEachIndexed { index, title ->
+                            val isSelected = selectedRoleTab == index
+                            Tab(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedRoleTab = index
+                                    // Autofill demo accounts based on selected tab for testing convenience
+                                    if (index == 0) {
+                                        username = "student1"
+                                        password = "password123"
+                                    } else {
+                                        username = "admin"
+                                        password = "adminsecure"
+                                    }
+                                },
+                                modifier = Modifier
+                                    .padding(2.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (isSelected) Color.White else Color.Transparent),
+                                text = {
+                                    Text(
+                                        text = title,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSelected) Color(0xFF4F46E5) else Color(0xFF64748B)
+                                    )
+                                }
+                            )
+                        }
+                    }
+
+                    // Username Input
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = { username = it },
+                        label = { Text("Username", fontSize = 11.sp) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = if (selectedRoleTab == 0) Icons.Default.Person else Icons.Default.AdminPanelSettings,
+                                contentDescription = "User Icon",
+                                tint = Color(0xFF64748B),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF4F46E5),
+                            unfocusedBorderColor = Color(0xFFE2E8F0)
+                        )
+                    )
+
+                    // Password Input
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password", fontSize = 11.sp) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Lock Icon",
+                                tint = Color(0xFF64748B),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle Visibility",
+                                    tint = Color(0xFF64748B),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        },
+                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF4F46E5),
+                            unfocusedBorderColor = Color(0xFFE2E8F0)
+                        )
+                    )
+
+                    // Error Message
+                    if (errorMessage != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFFEF2F2), RoundedCornerShape(8.dp))
+                                .border(1.dp, Color(0xFFFCA5A5), RoundedCornerShape(8.dp))
+                                .padding(10.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Error,
+                                    contentDescription = "Error",
+                                    tint = Color(0xFFDC2626),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(
+                                    text = errorMessage,
+                                    color = Color(0xFFDC2626),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    // Log In Button
+                    Button(
+                        onClick = { onLogin(username, password) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text(
+                            text = "Login",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            // Credentials helper card
+            OutlinedCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.outlinedCardColors(containerColor = Color(0xFFEEF2F6)),
+                border = BorderStroke(1.dp, Color(0xFFCBD5E1))
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Credentials Info",
+                            tint = Color(0xFF1E293B),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "Demo Accounts (File-Stored)",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E293B)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "• Student 1: student1 / password123\n• Student 2: student2 / password123\n• Registrar Admin: admin / adminsecure",
+                        fontSize = 10.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = Color(0xFF475569),
+                        lineHeight = 14.sp
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -60,11 +344,16 @@ fun MainLayout(viewModel: AcademicViewModel) {
     val cgpa = viewModel.getCumulativeCGPA()
     val totalCredits = viewModel.getTotalCreditsCompleted()
 
+    val session by viewModel.currentSession
+    val selectedAdminStudent by viewModel.adminSelectedStudent
+    val allStudentsList by viewModel.allStudentsList
+
     var selectedTab by remember { mutableStateOf(1) } // Default to Dashboard (Analytics)
     
     // Dialog and Modal triggers
     var showEditProfile by remember { mutableStateOf(false) }
     var showStatementOfResult by remember { mutableStateOf(false) }
+    var expandedAdminMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -73,7 +362,7 @@ fun MainLayout(viewModel: AcademicViewModel) {
                     .fillMaxWidth()
                     .background(Color.White)
             ) {
-                // Main Header Title Line
+                // Native Styled Top Toolbar
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -82,13 +371,32 @@ fun MainLayout(viewModel: AcademicViewModel) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text(
-                            text = "ACADEMIC PORTAL",
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 14.sp,
-                            color = Color(0xFF1E1B4B),
-                            letterSpacing = 0.5.sp
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "ACADEMIC PORTAL",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 14.sp,
+                                color = Color(0xFF1E1B4B),
+                                letterSpacing = 0.5.sp
+                            )
+                            if (session?.role == UserRole.ADMIN) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color(0xFFEEF2F6), RoundedCornerShape(4.dp))
+                                        .padding(vertical = 2.dp, horizontal = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "ADMIN",
+                                        fontSize = 8.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color(0xFF4F46E5)
+                                    )
+                                }
+                            }
+                        }
                         Text(
                             text = student.institution,
                             fontSize = 10.sp,
@@ -97,37 +405,110 @@ fun MainLayout(viewModel: AcademicViewModel) {
                         )
                     }
 
-                    // Toolbar action triggers
+                    // Top Toolbar Action Buttons
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Statement of Result Export Button
+                        // Transcript Export Button
                         Button(
                             onClick = { showStatementOfResult = true },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
                             shape = RoundedCornerShape(6.dp),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                             modifier = Modifier.height(28.dp)
                         ) {
                             Icon(Icons.Default.Print, contentDescription = "Statement", tint = Color.White, modifier = Modifier.size(12.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Export", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text("Export", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
 
-                        // Reset Database Button
+                        // Logout Button
                         IconButton(
-                            onClick = { viewModel.resetDemoData() },
+                            onClick = { viewModel.logout() },
                             modifier = Modifier
                                 .size(28.dp)
-                                .background(Color(0xFFF1F5F9), RoundedCornerShape(6.dp))
+                                .background(Color(0xFFFEF2F2), RoundedCornerShape(6.dp))
                         ) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Reset Demo", tint = Color(0xFF475569), modifier = Modifier.size(14.dp))
+                            Icon(
+                                imageVector = Icons.Default.Logout,
+                                contentDescription = "Sign Out",
+                                tint = Color(0xFFDC2626),
+                                modifier = Modifier.size(14.dp)
+                            )
                         }
                     }
                 }
 
-                // Profile Summary Bar (Clickable to edit)
+                // ADMIN SPECIFIC STUDENT SWITCHER BAR
+                if (session?.role == UserRole.ADMIN && allStudentsList.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFEEF2F6))
+                            .clickable { expandedAdminMenu = true }
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ManageAccounts,
+                                contentDescription = "Switch Student",
+                                tint = Color(0xFF4F46E5),
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = "Admin Controlling: ${student.name} (${student.matricNo})",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1E293B)
+                            )
+                        }
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "SWITCH",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color(0xFF4F46E5)
+                            )
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown", tint = Color(0xFF4F46E5), modifier = Modifier.size(14.dp))
+                        }
+
+                        DropdownMenu(
+                            expanded = expandedAdminMenu,
+                            onDismissRequest = { expandedAdminMenu = false }
+                        ) {
+                            allStudentsList.forEach { cred ->
+                                val isSelected = selectedAdminStudent == cred.username
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = "${cred.name} [${cred.matricNo}]",
+                                            fontSize = 11.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (isSelected) Color(0xFF4F46E5) else Color(0xFF1E293B)
+                                        )
+                                    },
+                                    onClick = {
+                                        viewModel.selectAdminStudent(cred.username)
+                                        expandedAdminMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    HorizontalDivider(color = Color(0xFFE2E8F0), thickness = 1.dp)
+                }
+
+                // PROFILE SUMMARY BANNER
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -169,10 +550,9 @@ fun MainLayout(viewModel: AcademicViewModel) {
         bottomBar = {
             NavigationBar(
                 containerColor = Color.White,
-                tonalElevation = 4.dp,
+                tonalElevation = 6.dp,
                 modifier = Modifier.height(56.dp)
             ) {
-                // Navigation items
                 val navItems = listOf(
                     Triple(0, "Planning", Icons.Default.School),
                     Triple(1, "Analytics", Icons.Default.TrendingUp),
@@ -240,7 +620,7 @@ fun MainLayout(viewModel: AcademicViewModel) {
         }
     }
 
-    // Modal Sheet / Dialog: Edit Profile
+    // Modal Dialog: Edit Profile
     if (showEditProfile) {
         var tempName by remember { mutableStateOf(student.name) }
         var tempMatric by remember { mutableStateOf(student.matricNo) }

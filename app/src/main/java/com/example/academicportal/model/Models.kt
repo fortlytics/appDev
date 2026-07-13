@@ -17,6 +17,40 @@ data class Student(
     val institution: String
 )
 
+data class StudentCredential(
+    val username: String,
+    val password: String,
+    val name: String,
+    val matricNo: String,
+    val department: String,
+    val level: String,
+    val gradingSystem: GradingSystem,
+    val institution: String
+)
+
+data class AdminCredential(
+    val username: String,
+    val password: String,
+    val name: String,
+    val department: String,
+    val institution: String
+)
+
+data class CredentialsFile(
+    val students: List<StudentCredential>,
+    val admins: List<AdminCredential>
+)
+
+enum class UserRole {
+    STUDENT, ADMIN
+}
+
+data class UserSession(
+    val username: String,
+    val role: UserRole,
+    val displayName: String
+)
+
 data class Course(
     val id: String = UUID.randomUUID().toString(),
     val code: String,
