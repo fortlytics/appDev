@@ -1,5 +1,6 @@
 package com.example.academicportal.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +22,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.academicportal.model.GradeUtils
@@ -74,63 +76,71 @@ fun DashboardScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // CGPA Card
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(Color.White, RoundedCornerShape(12.dp))
-                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ElevatedCard(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
             ) {
-                Text(
-                    text = "CUMULATIVE CGPA",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 10.sp,
-                    color = Color(0xFF64748B),
-                    letterSpacing = 0.5.sp
-                )
-                Text(
-                    text = String.format("%.2f", cgpa),
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 24.sp,
-                    color = Color(0xFF4F46E5),
-                    fontFamily = FontFamily.Monospace
-                )
-                Text(
-                    text = "Scale Limit: ${String.format("%.1f", maxScale)}",
-                    fontSize = 10.sp,
-                    color = Color(0xFF94A3B8)
-                )
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "CUMULATIVE CGPA",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 10.sp,
+                        color = Color(0xFF64748B),
+                        letterSpacing = 0.5.sp
+                    )
+                    Text(
+                        text = String.format("%.2f", cgpa),
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 26.sp,
+                        color = Color(0xFF4F46E5),
+                        fontFamily = FontFamily.Monospace
+                    )
+                    Text(
+                        text = "Scale Limit: ${String.format("%.1f", maxScale)}",
+                        fontSize = 10.sp,
+                        color = Color(0xFF94A3B8),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
 
             // Total Credits Completed Card
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(Color.White, RoundedCornerShape(12.dp))
-                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ElevatedCard(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
             ) {
-                Text(
-                    text = "TOTAL CREDITS",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 10.sp,
-                    color = Color(0xFF64748B),
-                    letterSpacing = 0.5.sp
-                )
-                Text(
-                    text = "$totalCredits CU",
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 24.sp,
-                    color = Color(0xFF0F172A),
-                    fontFamily = FontFamily.Monospace
-                )
-                Text(
-                    text = "Units Completed",
-                    fontSize = 10.sp,
-                    color = Color(0xFF94A3B8)
-                )
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "TOTAL CREDITS",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 10.sp,
+                        color = Color(0xFF64748B),
+                        letterSpacing = 0.5.sp
+                    )
+                    Text(
+                        text = "$totalCredits CU",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 26.sp,
+                        color = Color(0xFF0F172A),
+                        fontFamily = FontFamily.Monospace
+                    )
+                    Text(
+                        text = "Units Completed",
+                        fontSize = 10.sp,
+                        color = Color(0xFF94A3B8),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
 
@@ -139,32 +149,36 @@ fun DashboardScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Diploma Standing Card
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(Color.White, RoundedCornerShape(12.dp))
-                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ElevatedCard(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
             ) {
-                Text(
-                    text = "DIPLOMA CLASS",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 10.sp,
-                    color = Color(0xFF64748B),
-                    letterSpacing = 0.5.sp
-                )
-                Text(
-                    text = classification.className,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = Color(android.graphics.Color.parseColor(classification.colorHex))
-                )
-                Text(
-                    text = "Academic Tier Award",
-                    fontSize = 10.sp,
-                    color = Color(0xFF94A3B8)
-                )
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "DIPLOMA CLASS",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 10.sp,
+                        color = Color(0xFF64748B),
+                        letterSpacing = 0.5.sp
+                    )
+                    Text(
+                        text = classification.className,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 15.sp,
+                        color = Color(android.graphics.Color.parseColor(classification.colorHex))
+                    )
+                    Text(
+                        text = "Academic Tier Award",
+                        fontSize = 10.sp,
+                        color = Color(0xFF94A3B8),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
 
             // Academic Standing Alert Box
@@ -175,64 +189,72 @@ fun DashboardScreen(
             val standingBg = if (isProbation) Color(0xFFFEF2F2) else Color(0xFFECFDF5)
             val standingBorder = if (isProbation) Color(0xFFFCA5A5) else Color(0xFFA7F3D0)
 
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(standingBg, RoundedCornerShape(12.dp))
-                    .border(1.dp, standingBorder, RoundedCornerShape(12.dp))
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ElevatedCard(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = standingBg),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    if (isProbation) {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = "Warning",
-                            tint = standingColor,
-                            modifier = Modifier.size(14.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        if (isProbation) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "Warning",
+                                tint = standingColor,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                        Text(
+                            text = "ACADEMIC STANDING",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 10.sp,
+                            color = Color(0xFF64748B),
+                            letterSpacing = 0.5.sp
                         )
                     }
                     Text(
-                        text = "ACADEMIC STANDING",
-                        fontWeight = FontWeight.Bold,
+                        text = standingText,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 15.sp,
+                        color = standingColor
+                    )
+                    Text(
+                        text = standingDesc,
                         fontSize = 10.sp,
-                        color = Color(0xFF64748B),
-                        letterSpacing = 0.5.sp
+                        color = standingColor.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
-                Text(
-                    text = standingText,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = standingColor
-                )
-                Text(
-                    text = standingDesc,
-                    fontSize = 10.sp,
-                    color = standingColor.copy(alpha = 0.8f)
-                )
             }
         }
 
         // GPA Trend Custom Canvas Area Curve
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White, RoundedCornerShape(12.dp))
-                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
         ) {
-            Text(
-                text = "SEMESTER GPA TREND",
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp,
-                color = Color(0xFF1E293B),
-                letterSpacing = 0.5.sp
-            )
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "SEMESTER GPA TREND",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 12.sp,
+                    color = Color(0xFF1E293B),
+                    letterSpacing = 0.5.sp
+                )
 
             if (semesters.isEmpty()) {
                 Box(
@@ -352,95 +374,98 @@ fun DashboardScreen(
                 }
             }
         }
+    }
 
-        // Grade Distribution Widget
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White, RoundedCornerShape(12.dp))
-                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    // Grade Distribution Widget
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
         ) {
-            Text(
-                text = "GRADE DISTRIBUTION",
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp,
-                color = Color(0xFF1E293B),
-                letterSpacing = 0.5.sp
-            )
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "GRADE DISTRIBUTION",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 12.sp,
+                    color = Color(0xFF1E293B),
+                    letterSpacing = 0.5.sp
+                )
 
-            // Aggregate course grades
-            val allCourses = semesters.flatMap { it.courses }
-            if (allCourses.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("No grade records logged yet.", fontSize = 11.sp, color = Color(0xFF94A3B8))
-                }
-            } else {
-                val gradeCounts = allCourses.groupBy { it.grade }.mapValues { it.value.size }
-                val maxCount = gradeCounts.values.maxOrNull() ?: 1
+                // Aggregate course grades
+                val allCourses = semesters.flatMap { it.courses }
+                if (allCourses.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No grade records logged yet.", fontSize = 12.sp, color = Color(0xFF94A3B8))
+                    }
+                } else {
+                    val gradeCounts = allCourses.groupBy { it.grade }.mapValues { it.value.size }
+                    val maxCount = gradeCounts.values.maxOrNull() ?: 1
 
-                val sortedGrades = listOf("A", "AB", "B", "BC", "C", "CD", "D", "E", "F")
-                    .filter { gradeCounts.containsKey(it) || it in listOf("A", "B", "C", "D", "F") }
+                    val sortedGrades = listOf("A", "AB", "B", "BC", "C", "CD", "D", "E", "F")
+                        .filter { gradeCounts.containsKey(it) || it in listOf("A", "B", "C", "D", "F") }
 
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    sortedGrades.forEach { grade ->
-                        val count = gradeCounts[grade] ?: 0
-                        val percentage = if (allCourses.isNotEmpty()) count.toFloat() / allCourses.size else 0f
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        sortedGrades.forEach { grade ->
+                            val count = gradeCounts[grade] ?: 0
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(
-                                text = grade,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp,
-                                color = Color(0xFF334155),
-                                modifier = Modifier.width(30.dp),
-                                fontFamily = FontFamily.Monospace
-                            )
-
-                            // Horizontal progress line representing frequency
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(12.dp)
-                                    .background(Color(0xFFF1F5F9), RoundedCornerShape(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
+                                Text(
+                                    text = grade,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF334155),
+                                    modifier = Modifier.width(30.dp),
+                                    fontFamily = FontFamily.Monospace
+                                )
+
+                                // Horizontal progress line representing frequency
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxHeight()
-                                        .fillMaxWidth(fraction = if (maxCount > 0) count.toFloat() / maxCount else 0f)
-                                        .background(
-                                            color = when (grade) {
-                                                "A", "AB" -> Color(0xFF10B981)
-                                                "B", "BC" -> Color(0xFF3B82F6)
-                                                "C", "CD" -> Color(0xFFF59E0B)
-                                                "D", "E" -> Color(0xFF94A3B8)
-                                                else -> Color(0xFFEF4444)
-                                            },
-                                            shape = RoundedCornerShape(6.dp)
-                                        )
+                                        .weight(1f)
+                                        .height(12.dp)
+                                        .background(Color(0xFFF1F5F9), RoundedCornerShape(6.dp))
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .fillMaxWidth(fraction = if (maxCount > 0) count.toFloat() / maxCount else 0f)
+                                            .background(
+                                                color = when (grade) {
+                                                    "A", "AB" -> Color(0xFF10B981)
+                                                    "B", "BC" -> Color(0xFF3B82F6)
+                                                    "C", "CD" -> Color(0xFFF59E0B)
+                                                    "D", "E" -> Color(0xFF94A3B8)
+                                                    else -> Color(0xFFEF4444)
+                                                },
+                                                shape = RoundedCornerShape(6.dp)
+                                            )
+                                    )
+                                }
+
+                                Text(
+                                    text = "$count Courses",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF475569),
+                                    modifier = Modifier.width(70.dp),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.End
                                 )
                             }
-
-                            Text(
-                                text = "$count Courses",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF475569),
-                                modifier = Modifier.width(60.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.End
-                            )
                         }
                     }
                 }
@@ -449,81 +474,119 @@ fun DashboardScreen(
 
         // Side by side semester comparison table
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White, RoundedCornerShape(12.dp))
-                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "DETAILED SEMESTER SIDE-BY-SIDE COMPARISON",
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.sp,
+                text = "SEMESTER PERFORMANCES COMPARED",
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 12.sp,
                 color = Color(0xFF1E293B),
                 letterSpacing = 0.5.sp
             )
 
             if (semesters.isEmpty()) {
-                Text(
-                    text = "No semesters recorded yet. Please head to Semesters tab to log course scores.",
-                    fontSize = 11.sp,
-                    color = Color(0xFF94A3B8)
-                )
-            } else {
-                Column(
+                ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
                 ) {
-                    // Header
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFF8FAFC))
-                            .padding(vertical = 8.dp, horizontal = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("Semester Period", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = Color(0xFF475569), modifier = Modifier.weight(1.5f))
-                        Text("Courses", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = Color(0xFF475569), modifier = Modifier.weight(0.8f))
-                        Text("Credits", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = Color(0xFF475569), modifier = Modifier.weight(0.9f))
-                        Text("GPA", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = Color(0xFF475569), modifier = Modifier.weight(0.8f))
-                        Text("Class", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = Color(0xFF475569), modifier = Modifier.weight(1.2f))
+                        Text(
+                            text = "No semesters recorded yet. Head to the Courses tab to log course scores.",
+                            fontSize = 12.sp,
+                            color = Color(0xFF94A3B8),
+                            textAlign = TextAlign.Center
+                        )
                     }
-
-                    // Rows
-                    semesters.forEach { sem ->
-                        val semClass = GradeUtils.getClassification(sem.gpa, gradingSystem)
-                        val totalCreditsInSem = sem.courses.sumOf { it.credits }
-                        
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp, horizontal = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                }
+            } else {
+                semesters.forEach { sem ->
+                    val semClass = GradeUtils.getClassification(sem.gpa, gradingSystem)
+                    val totalCreditsInSem = sem.courses.sumOf { it.credits }
+                    
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(sem.name, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1E293B), modifier = Modifier.weight(1.5f))
-                            Text("${sem.courses.size} Logged", fontSize = 10.sp, color = Color(0xFF64748B), modifier = Modifier.weight(0.8f))
-                            Text("$totalCreditsInSem CU", fontSize = 10.sp, color = Color(0xFF64748B), modifier = Modifier.weight(0.9f))
-                            Text(String.format("%.2f", sem.gpa), fontWeight = FontWeight.Bold, fontSize = 10.sp, color = Color(0xFF0F172A), modifier = Modifier.weight(0.8f))
-                            
-                            Box(
-                                modifier = Modifier
-                                    .weight(1.2f)
-                                    .background(Color(android.graphics.Color.parseColor(semClass.badgeBgHex)).copy(alpha = 0.15f), RoundedCornerShape(4.dp))
-                                    .padding(vertical = 2.dp, horizontal = 4.dp),
-                                contentAlignment = Alignment.Center
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = semClass.className,
-                                    color = Color(android.graphics.Color.parseColor(semClass.colorHex)),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 8.sp,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    text = sem.name.uppercase(),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF1E1B4B)
+                                )
+                                
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color(android.graphics.Color.parseColor(semClass.badgeBgHex)).copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+                                        .border(1.dp, Color(android.graphics.Color.parseColor(semClass.colorHex)).copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    Text(
+                                        text = semClass.className.uppercase(),
+                                        color = Color(android.graphics.Color.parseColor(semClass.colorHex)),
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 9.sp
+                                    )
+                                }
+                            }
+                            
+                            HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "${sem.courses.size} Courses",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF64748B)
+                                    )
+                                    Text(
+                                        text = "•",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFFCBD5E1)
+                                    )
+                                    Text(
+                                        text = "$totalCreditsInSem Credits (CU)",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF64748B)
+                                    )
+                                }
+                                
+                                Text(
+                                    text = "GPA: ${String.format("%.2f", sem.gpa)}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = Color(0xFF4F46E5)
                                 )
                             }
                         }
-                        HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
                     }
                 }
             }

@@ -1,6 +1,7 @@
 package com.example.academicportal.ui
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -55,137 +56,148 @@ fun AdvisorScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // AI Controls Box
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White, RoundedCornerShape(12.dp))
-                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = "AI",
-                    tint = Color(0xFF4F46E5),
-                    modifier = Modifier
-                        .size(20.dp)
-                        .rotate(if (isLoading) rotationAngle else 0f)
-                )
-                Text(
-                    text = "AI ACADEMIC COUNSELOR",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = Color(0xFF1E293B),
-                    letterSpacing = 0.5.sp
-                )
-            }
-
-            Text(
-                text = "Unlock specialized academic analysis based directly on your current records. Our Gemini-powered consultant reads your department, semester GPAs, subject titles, and credit weightages to forge a targeted success blueprint.",
-                color = Color(0xFF475569),
-                fontSize = 11.sp,
-                lineHeight = 16.sp
-            )
-
-            // Assessment Scope Info Box
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFF8FAFC), RoundedCornerShape(8.dp))
-                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
-                    .padding(10.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "AI",
+                        tint = Color(0xFF4F46E5),
+                        modifier = Modifier
+                            .size(20.dp)
+                            .rotate(if (isLoading) rotationAngle else 0f)
+                    )
+                    Text(
+                        text = "AI ACADEMIC COUNSELOR",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 12.sp,
+                        color = Color(0xFF1E293B),
+                        letterSpacing = 0.5.sp
+                    )
+                }
+
                 Text(
-                    text = "What the AI advisor assesses:",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 10.sp,
+                    text = "Unlock specialized academic analysis based directly on your current records. Our Gemini-powered consultant reads your department, semester GPAs, subject titles, and credit weightages to forge a targeted success blueprint.",
                     color = Color(0xFF475569),
-                    letterSpacing = 0.3.sp
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Medium
                 )
 
-                val criteria = listOf(
-                    "Semester-on-semester progress trends",
-                    "Technical skill strengths vs theory gaps",
-                    "Impact of high-weight (3 & 4 credit unit) courses",
-                    "Targeted GPA maps to secure Distinction level"
-                )
-
-                criteria.forEach { item ->
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                // Assessment Scope Info Box
+                OutlinedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.outlinedCardColors(containerColor = Color(0xFFF8FAFC)),
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(4.dp)
-                                .background(Color(0xFF4F46E5), RoundedCornerShape(50))
-                        )
                         Text(
-                            text = item,
+                            text = "What the AI advisor assesses:",
+                            fontWeight = FontWeight.ExtraBold,
                             fontSize = 10.sp,
-                            color = Color(0xFF64748B)
+                            color = Color(0xFF475569),
+                            letterSpacing = 0.3.sp
                         )
+
+                        val criteria = listOf(
+                            "Semester-on-semester progress trends",
+                            "Technical skill strengths vs theory gaps",
+                            "Impact of high-weight (3 & 4 credit unit) courses",
+                            "Targeted GPA maps to secure Distinction level"
+                        )
+
+                        criteria.forEach { item ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(4.dp)
+                                        .background(Color(0xFF4F46E5), RoundedCornerShape(50))
+                                )
+                                Text(
+                                    text = item,
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF64748B),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
-            }
 
-            // Error Display
-            if (errorMessage != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFFFEF2F2), RoundedCornerShape(8.dp))
-                        .border(1.dp, Color(0xFFFCA5A5), RoundedCornerShape(8.dp))
-                        .padding(10.dp)
-                ) {
-                    Text(
-                        text = errorMessage,
-                        fontSize = 11.sp,
-                        color = Color(0xFFDC2626),
-                        fontWeight = FontWeight.SemiBold
-                    )
+                // Error Display
+                if (errorMessage != null) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF2F2)),
+                        border = BorderStroke(1.dp, Color(0xFFFCA5A5))
+                    ) {
+                        Box(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = errorMessage,
+                                fontSize = 11.sp,
+                                color = Color(0xFFDC2626),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
                 }
-            }
 
-            // Consult Trigger Button
-            Button(
-                onClick = onConsultAdvisor,
-                enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4F46E5),
-                    disabledContainerColor = Color(0xFFC7D2FE)
-                ),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Authorizing Gemini Advisor...", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                } else {
-                    Text("Consult Academic Advisor", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                // Consult Trigger Button
+                Button(
+                    onClick = onConsultAdvisor,
+                    enabled = !isLoading,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4F46E5),
+                        disabledContainerColor = Color(0xFFC7D2FE)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Authorizing Gemini Advisor...", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    } else {
+                        Text("Consult Academic Advisor", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
             }
         }
 
         // Strategy & Report Output Box
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White, RoundedCornerShape(12.dp))
-                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
         ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
             // Report Header
             Row(
                 modifier = Modifier
@@ -369,5 +381,6 @@ fun AdvisorScreen(
                 }
             }
         }
+    }
     }
 }

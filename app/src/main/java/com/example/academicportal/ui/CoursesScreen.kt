@@ -1,5 +1,6 @@
 package com.example.academicportal.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -110,180 +111,239 @@ fun CoursesScreen(
             semesters.forEach { sem ->
                 val semClass = GradeUtils.getClassification(sem.gpa, gradingSystem)
                 
-                Column(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White, RoundedCornerShape(12.dp))
-                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp)),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(bottom = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    // Semester Bar Header
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFFF8FAFC), RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = sem.name.uppercase(),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF0F172A),
-                                    letterSpacing = 0.5.sp
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .background(Color(android.graphics.Color.parseColor(semClass.badgeBgHex)).copy(alpha = 0.15f), RoundedCornerShape(4.dp))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        // Semester Bar Header
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFF1F5F9))
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Text(
-                                        text = "GPA: ${String.format("%.2f", sem.gpa)}",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 9.sp,
-                                        color = Color(android.graphics.Color.parseColor(semClass.colorHex))
+                                        text = sem.name.uppercase(),
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 13.sp,
+                                        color = Color(0xFF1E1B4B),
+                                        letterSpacing = 0.5.sp
                                     )
-                                }
-                            }
-                        }
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // Add Course Action Button
-                            IconButton(
-                                onClick = {
-                                    activeSemesterIdForCourse = sem.id
-                                    editingCourse = null
-                                    showCourseDialog = true
-                                },
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .background(Color.White, RoundedCornerShape(6.dp))
-                                    .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = "Add Course", tint = Color(0xFF4F46E5), modifier = Modifier.size(16.dp))
-                            }
-
-                            // Delete Semester Button
-                            IconButton(
-                                onClick = { onDeleteSemester(sem.id) },
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .background(Color.White, RoundedCornerShape(6.dp))
-                                    .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
-                            ) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete Semester", tint = Color(0xFFDC2626), modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
-                    HorizontalDivider(color = Color(0xFFE2E8F0), thickness = 1.dp)
-
-                    // Semester Courses Table
-                    if (sem.courses.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("No courses registered in this semester. Click '+' to add.", fontSize = 11.sp, color = Color(0xFF94A3B8))
-                        }
-                    } else {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 4.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            // Headers
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp, horizontal = 4.dp)
-                            ) {
-                                Text("Code", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = Color(0xFF64748B), modifier = Modifier.weight(1.2f))
-                                Text("Course Title", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = Color(0xFF64748B), modifier = Modifier.weight(2.5f))
-                                Text("CU", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = Color(0xFF64748B), modifier = Modifier.weight(0.5f))
-                                Text("Score", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = Color(0xFF64748B), modifier = Modifier.weight(0.8f))
-                                Text("Grade", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = Color(0xFF64748B), modifier = Modifier.weight(0.8f))
-                                Text("Actions", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = Color(0xFF64748B), modifier = Modifier.weight(1.0f), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                            }
-
-                            // Course Rows
-                            sem.courses.forEach { course ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp, horizontal = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(course.code, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF1E293B), fontFamily = FontFamily.Monospace, modifier = Modifier.weight(1.2f))
-                                    Text(course.title, fontSize = 11.sp, color = Color(0xFF334155), modifier = Modifier.weight(2.5f))
-                                    Text("${course.credits}", fontSize = 11.sp, fontFamily = FontFamily.Monospace, color = Color(0xFF475569), modifier = Modifier.weight(0.5f))
-                                    Text("${course.score}%", fontSize = 11.sp, fontFamily = FontFamily.Monospace, color = Color(0xFF475569), modifier = Modifier.weight(0.8f))
-                                    
                                     Box(
                                         modifier = Modifier
-                                            .weight(0.8f)
-                                            .padding(end = 4.dp)
+                                            .background(Color(android.graphics.Color.parseColor(semClass.badgeBgHex)).copy(alpha = 0.15f), RoundedCornerShape(24.dp))
+                                            .padding(horizontal = 8.dp, vertical = 3.dp)
                                     ) {
                                         Text(
-                                            text = "${course.grade} (${String.format("%.2f", course.gp)})",
-                                            fontWeight = FontWeight.Bold,
+                                            text = "GPA: ${String.format("%.2f", sem.gpa)}",
+                                            fontWeight = FontWeight.ExtraBold,
                                             fontSize = 9.sp,
-                                            fontFamily = FontFamily.Monospace,
-                                            color = when (course.grade) {
-                                                "A", "AB" -> Color(0xFF059669)
-                                                "B", "BC" -> Color(0xFF2563EB)
-                                                "C", "CD" -> Color(0xFFD97706)
-                                                "D", "E" -> Color(0xFF64748B)
-                                                else -> Color(0xFFDC2626)
-                                            }
-                                        )
-                                    }
-
-                                    Row(
-                                        modifier = Modifier.weight(1.0f),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        // Edit Icon Button
-                                        Icon(
-                                            imageVector = Icons.Default.Edit,
-                                            contentDescription = "Edit",
-                                            tint = Color(0xFF4F46E5),
-                                            modifier = Modifier
-                                                .size(24.dp)
-                                                .clickable {
-                                                    activeSemesterIdForCourse = sem.id
-                                                    editingCourse = course
-                                                    showCourseDialog = true
-                                                }
-                                                .padding(4.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        // Delete Icon Button
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = "Delete",
-                                            tint = Color(0xFFDC2626),
-                                            modifier = Modifier
-                                                .size(24.dp)
-                                                .clickable {
-                                                    onDeleteCourse(sem.id, course.id)
-                                                }
-                                                .padding(4.dp)
+                                            color = Color(android.graphics.Color.parseColor(semClass.colorHex))
                                         )
                                     }
                                 }
-                                HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+                            }
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // Add Course Action Button
+                                IconButton(
+                                    onClick = {
+                                        activeSemesterIdForCourse = sem.id
+                                        editingCourse = null
+                                        showCourseDialog = true
+                                    },
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .background(Color.White, RoundedCornerShape(50))
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = "Add Course", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
+                                }
+
+                                // Delete Semester Button
+                                IconButton(
+                                    onClick = { onDeleteSemester(sem.id) },
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .background(Color.White, RoundedCornerShape(50))
+                                ) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Delete Semester", tint = Color(0xFFDC2626), modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                        HorizontalDivider(color = Color(0xFFE2E8F0), thickness = 1.dp)
+
+                        // Semester Courses List
+                        if (sem.courses.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("No courses registered in this semester. Click '+' to add.", fontSize = 12.sp, color = Color(0xFF94A3B8))
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                sem.courses.forEach { course ->
+                                    val gradeColor = when (course.grade) {
+                                        "A", "AB" -> Color(0xFF059669)
+                                        "B", "BC" -> Color(0xFF2563EB)
+                                        "C", "CD" -> Color(0xFFD97706)
+                                        "D", "E" -> Color(0xFF64748B)
+                                        else -> Color(0xFFDC2626)
+                                    }
+
+                                    OutlinedCard(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.outlinedCardColors(containerColor = Color.White),
+                                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = course.code.uppercase(),
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        fontSize = 11.sp,
+                                                        fontFamily = FontFamily.Monospace,
+                                                        color = Color(0xFF4F46E5),
+                                                        letterSpacing = 0.5.sp
+                                                    )
+                                                    Text(
+                                                        text = course.title,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 13.sp,
+                                                        color = Color(0xFF1E293B)
+                                                    )
+                                                }
+
+                                                // Grade Label Badge
+                                                Box(
+                                                    modifier = Modifier
+                                                        .background(gradeColor.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                                                        .border(1.dp, gradeColor.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "${course.grade} (${String.format("%.2f", course.gp)} GP)",
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        fontSize = 10.sp,
+                                                        fontFamily = FontFamily.Monospace,
+                                                        color = gradeColor
+                                                    )
+                                                }
+                                            }
+
+                                            HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    // Credit Badge
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .background(Color(0xFFEEF2F6), RoundedCornerShape(6.dp))
+                                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = "${course.credits} CU",
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontFamily = FontFamily.Monospace,
+                                                            color = Color(0xFF475569)
+                                                        )
+                                                    }
+
+                                                    // Score Badge
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .background(Color(0xFFEEF2F6), RoundedCornerShape(6.dp))
+                                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = "Score: ${course.score}%",
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontFamily = FontFamily.Monospace,
+                                                            color = Color(0xFF475569)
+                                                        )
+                                                    }
+                                                }
+
+                                                // Actions
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    IconButton(
+                                                        onClick = {
+                                                            activeSemesterIdForCourse = sem.id
+                                                            editingCourse = course
+                                                            showCourseDialog = true
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Edit,
+                                                            contentDescription = "Edit",
+                                                            tint = Color(0xFF4F46E5),
+                                                            modifier = Modifier.size(16.dp)
+                                                        )
+                                                    }
+
+                                                    IconButton(
+                                                        onClick = {
+                                                            onDeleteCourse(sem.id, course.id)
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Delete,
+                                                            contentDescription = "Delete",
+                                                            tint = Color(0xFFDC2626),
+                                                            modifier = Modifier.size(16.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
