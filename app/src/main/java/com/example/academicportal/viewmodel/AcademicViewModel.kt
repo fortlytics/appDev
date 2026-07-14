@@ -68,11 +68,49 @@ class AcademicViewModel(application: Application) : AndroidViewModel(application
 
     private fun loadCredentialsFromAssets() {
         try {
-            val jsonStr = getApplication<Application>().assets.open("credentials.json").bufferedReader().use { it.readText() }
-            val fileData = gson.fromJson(jsonStr, CredentialsFile::class.java)
-            _allStudentsList.value = fileData.students
+            val savedStudentsJson = sharedPrefs.getString("all_students_json", null)
+            if (savedStudentsJson != null) {
+                val type = object : TypeToken<List<StudentCredential>>() {}.type
+                _allStudentsList.value = gson.fromJson(savedStudentsJson, type)
+            } else {
+                val jsonStr = getApplication<Application>().assets.open("credentials.json").bufferedReader().use { it.readText() }
+                val fileData = gson.fromJson(jsonStr, CredentialsFile::class.java)
+                _allStudentsList.value = fileData.students
+                sharedPrefs.edit().putString("all_students_json", gson.toJson(fileData.students)).apply()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    fun addStudent(student: StudentCredential) {
+        val updated = _allStudentsList.value + student
+        _allStudentsList.value = updated
+        sharedPrefs.edit().putString("all_students_json", gson.toJson(updated)).apply()
+    }
+
+    fun removeStudent(username: String) {
+        val updated = _allStudentsList.value.filter { it.username != username }
+        _allStudentsList.value = updated
+        sharedPrefs.edit().putString("all_students_json", gson.toJson(updated)).apply()
+
+        // Purge student-specific academic databases in shared prefs
+        sharedPrefs.edit()
+            .remove("student_profile_$username")
+            .remove("semesters_records_$username")
+            .remove("advisor_advice_$username")
+            .apply()
+
+        // If currently controlling this student, switch to first available or fallback
+        if (_adminSelectedStudent.value == username) {
+            val nextAvail = updated.firstOrNull()?.username
+            _adminSelectedStudent.value = nextAvail
+            if (nextAvail != null) {
+                sharedPrefs.edit().putString("admin_selected_student", nextAvail).apply()
+            } else {
+                sharedPrefs.edit().remove("admin_selected_student").apply()
+            }
+            syncStateWithSession()
         }
     }
 
@@ -251,11 +289,8 @@ class AcademicViewModel(application: Application) : AndroidViewModel(application
 
     fun login(usernameInput: String, passwordInput: String): Boolean {
         try {
-            val jsonStr = getApplication<Application>().assets.open("credentials.json").bufferedReader().use { it.readText() }
-            val fileData = gson.fromJson(jsonStr, CredentialsFile::class.java)
-            
-            // Check students list
-            val matchedStudent = fileData.students.find { 
+            // Check dynamic students list from our "mini db" state
+            val matchedStudent = _allStudentsList.value.find { 
                 it.username.equals(usernameInput, ignoreCase = true) && it.password == passwordInput 
             }
             if (matchedStudent != null) {
@@ -271,7 +306,9 @@ class AcademicViewModel(application: Application) : AndroidViewModel(application
                 return true
             }
 
-            // Check admins list
+            // Check admins list from credentials.json
+            val jsonStr = getApplication<Application>().assets.open("credentials.json").bufferedReader().use { it.readText() }
+            val fileData = gson.fromJson(jsonStr, CredentialsFile::class.java)
             val matchedAdmin = fileData.admins.find { 
                 it.username.equals(usernameInput, ignoreCase = true) && it.password == passwordInput 
             }
@@ -285,7 +322,7 @@ class AcademicViewModel(application: Application) : AndroidViewModel(application
                 sharedPrefs.edit().putString("user_session", gson.toJson(session)).apply()
                 
                 if (_adminSelectedStudent.value == null) {
-                    val firstStudent = fileData.students.firstOrNull()?.username
+                    val firstStudent = _allStudentsList.value.firstOrNull()?.username
                     _adminSelectedStudent.value = firstStudent
                     sharedPrefs.edit().putString("admin_selected_student", firstStudent).apply()
                 }

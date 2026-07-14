@@ -348,6 +348,23 @@ fun MainLayout(viewModel: AcademicViewModel) {
     val selectedAdminStudent by viewModel.adminSelectedStudent
     val allStudentsList by viewModel.allStudentsList
 
+    // Navigation and screen gating based on Role-Based Access Control
+    val navItems = if (session?.role == UserRole.ADMIN) {
+        listOf(
+            Triple(0, "Students", Icons.Default.People),
+            Triple(1, "Analytics", Icons.Default.TrendingUp),
+            Triple(2, "Grades Ledger", Icons.Default.Book),
+            Triple(3, "Exam Office", Icons.Default.SupportAgent)
+        )
+    } else {
+        listOf(
+            Triple(0, "Planning", Icons.Default.School),
+            Triple(1, "Analytics", Icons.Default.TrendingUp),
+            Triple(2, "Official Grades", Icons.Default.Book),
+            Triple(3, "Exam Officer", Icons.Default.SupportAgent)
+        )
+    }
+
     var selectedTab by remember { mutableStateOf(1) } // Default to Dashboard (Analytics)
     
     // Dialog and Modal triggers
@@ -398,7 +415,7 @@ fun MainLayout(viewModel: AcademicViewModel) {
                             }
                         }
                         Text(
-                            text = student.institution,
+                            text = student.institution.ifBlank { "Academic Registry" },
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF64748B)
@@ -435,12 +452,12 @@ fun MainLayout(viewModel: AcademicViewModel) {
                                 contentDescription = "Sign Out",
                                 tint = Color(0xFFDC2626),
                                 modifier = Modifier.size(14.dp)
-                            )
+                              )
                         }
                     }
                 }
 
-                // ADMIN SPECIFIC STUDENT SWITCHER BAR
+                // ADMIN SPECIFIC STUDENT SWITCHER BAR (Only render when controlling ledger portfolio)
                 if (session?.role == UserRole.ADMIN && allStudentsList.isNotEmpty()) {
                     Row(
                         modifier = Modifier
@@ -462,7 +479,7 @@ fun MainLayout(viewModel: AcademicViewModel) {
                                 modifier = Modifier.size(14.dp)
                             )
                             Text(
-                                text = "Admin Controlling: ${student.name} (${student.matricNo})",
+                                text = "Controlling: ${student.name} (${student.matricNo.ifBlank { "No Matric" }})",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1E293B)
@@ -524,7 +541,7 @@ fun MainLayout(viewModel: AcademicViewModel) {
                     ) {
                         Icon(Icons.Default.Person, contentDescription = "Profile", tint = Color(0xFF4F46E5), modifier = Modifier.size(14.dp))
                         Text(
-                            text = "${student.name} • ${student.matricNo} [${student.level}]",
+                            text = "${student.name} • ${student.matricNo.ifBlank { "No Matric" }} [${student.level}]",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF334155)
@@ -553,13 +570,6 @@ fun MainLayout(viewModel: AcademicViewModel) {
                 tonalElevation = 6.dp,
                 modifier = Modifier.height(56.dp)
             ) {
-                val navItems = listOf(
-                    Triple(0, "Planning", Icons.Default.School),
-                    Triple(1, "Analytics", Icons.Default.TrendingUp),
-                    Triple(2, "Semesters", Icons.Default.Book),
-                    Triple(3, "Advisor", Icons.Default.Star)
-                )
-
                 navItems.forEach { (index, title, icon) ->
                     val isSelected = selectedTab == index
                     NavigationBarItem(
@@ -585,37 +595,60 @@ fun MainLayout(viewModel: AcademicViewModel) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (selectedTab) {
-                0 -> PlanningScreen(gradingSystem = student.gradingSystem)
-                1 -> DashboardScreen(
-                    studentName = student.name,
-                    gradingSystem = student.gradingSystem,
-                    semesters = semesters,
-                    cgpa = cgpa,
-                    totalCredits = totalCredits
-                )
-                2 -> CoursesScreen(
-                    gradingSystem = student.gradingSystem,
-                    semesters = semesters,
-                    onAddSemester = { viewModel.addSemester(it) },
-                    onDeleteSemester = { viewModel.deleteSemester(it) },
-                    onAddCourse = { semId, code, title, credits, score ->
-                        viewModel.addCourse(semId, code, title, credits, score)
-                    },
-                    onDeleteCourse = { semId, courseId ->
-                        viewModel.deleteCourse(semId, courseId)
-                    },
-                    onUpdateCourse = { semId, courseId, credits, score ->
-                        viewModel.updateCourse(semId, courseId, credits, score)
-                    }
-                )
-                3 -> AdvisorScreen(
-                    student = student,
-                    advice = advice,
-                    isLoading = isLoadingAdvisor,
-                    errorMessage = advisorError,
-                    onConsultAdvisor = { viewModel.askAIAdvisor() }
-                )
+            if (session?.role == UserRole.ADMIN) {
+                when (selectedTab) {
+                    0 -> StudentManagementScreen(viewModel = viewModel)
+                    1 -> DashboardScreen(
+                        studentName = student.name,
+                        gradingSystem = student.gradingSystem,
+                        semesters = semesters,
+                        cgpa = cgpa,
+                        totalCredits = totalCredits
+                    )
+                    2 -> CoursesScreen(
+                        gradingSystem = student.gradingSystem,
+                        semesters = semesters,
+                        onAddSemester = { viewModel.addSemester(it) },
+                        onDeleteSemester = { viewModel.deleteSemester(it) },
+                        onAddCourse = { semId, code, title, credits, score ->
+                            viewModel.addCourse(semId, code, title, credits, score)
+                        },
+                        onDeleteCourse = { semId, courseId ->
+                            viewModel.deleteCourse(semId, courseId)
+                        },
+                        onUpdateCourse = { semId, courseId, credits, score ->
+                            viewModel.updateCourse(semId, courseId, credits, score)
+                        },
+                        isReadOnly = false
+                    )
+                    3 -> AdvisorScreen(
+                        student = student
+                    )
+                }
+            } else {
+                when (selectedTab) {
+                    0 -> PlanningScreen(gradingSystem = student.gradingSystem)
+                    1 -> DashboardScreen(
+                        studentName = student.name,
+                        gradingSystem = student.gradingSystem,
+                        semesters = semesters,
+                        cgpa = cgpa,
+                        totalCredits = totalCredits
+                    )
+                    2 -> CoursesScreen(
+                        gradingSystem = student.gradingSystem,
+                        semesters = semesters,
+                        onAddSemester = {},
+                        onDeleteSemester = {},
+                        onAddCourse = { _, _, _, _, _ -> },
+                        onDeleteCourse = { _, _ -> },
+                        onUpdateCourse = { _, _, _, _ -> },
+                        isReadOnly = true
+                    )
+                    3 -> AdvisorScreen(
+                        student = student
+                    )
+                }
             }
         }
     }
@@ -749,3 +782,328 @@ fun MainLayout(viewModel: AcademicViewModel) {
         )
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StudentManagementScreen(
+    viewModel: AcademicViewModel,
+    modifier: Modifier = Modifier
+) {
+    val allStudentsList by viewModel.allStudentsList
+    val selectedAdminStudent by viewModel.adminSelectedStudent
+    
+    var searchQuery by remember { mutableStateOf("") }
+    var showEnrollDialog by remember { mutableStateOf(false) }
+    var showConfirmDeleteUsername by remember { mutableStateOf<String?>(null) }
+    
+    // Enroll dialog state
+    var enrollUsername by remember { mutableStateOf("") }
+    var enrollPassword by remember { mutableStateOf("") }
+    var enrollName by remember { mutableStateOf("") }
+    var enrollMatric by remember { mutableStateOf("") }
+    var enrollDept by remember { mutableStateOf("") }
+    var enrollLevel by remember { mutableStateOf("ND I") }
+    var enrollSystem by remember { mutableStateOf(GradingSystem.NBTE) }
+    var enrollInstitution by remember { mutableStateOf("Federal Polytechnic Offa") }
+    
+    val filteredStudents = allStudentsList.filter {
+        it.name.contains(searchQuery, ignoreCase = true) ||
+        it.matricNo.contains(searchQuery, ignoreCase = true) ||
+        it.department.contains(searchQuery, ignoreCase = true)
+    }
+
+    Box(
+        modifier = modifier.fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "STUDENT ACCOUNTS DIRECTORY",
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                color = Color(0xFF1E293B),
+                letterSpacing = 0.5.sp
+            )
+            
+            // Search Input Box
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search by name, matriculation, or dept...", fontSize = 11.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, "Search", modifier = Modifier.size(16.dp)) },
+                textStyle = LocalTextStyle.current.copy(fontSize = 12.sp),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF4F46E5),
+                    unfocusedBorderColor = Color(0xFFE2E8F0)
+                )
+            )
+            
+            if (filteredStudents.isEmpty()) {
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No student accounts found.", fontSize = 11.sp, color = Color(0xFF94A3B8))
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    filteredStudents.forEach { cred ->
+                        val isActive = selectedAdminStudent == cred.username
+                        
+                        ElevatedCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(
+                                    if (isActive) Modifier.border(2.dp, Color(0xFF4F46E5), RoundedCornerShape(12.dp))
+                                    else Modifier
+                                )
+                                .clickable { viewModel.selectAdminStudent(cred.username) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.elevatedCardColors(
+                                containerColor = if (isActive) Color(0xFFEEF2F6) else Color.White
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    // Status dot
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(
+                                                if (isActive) Color(0xFF4F46E5) else Color(0xFFCBD5E1),
+                                                CircleShape
+                                            )
+                                    )
+                                    Column {
+                                        Text(
+                                            text = cred.name,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = Color(0xFF0F172A)
+                                        )
+                                        Text(
+                                            text = "${cred.matricNo} • ${cred.department} (${cred.level})",
+                                            fontSize = 10.sp,
+                                            color = Color(0xFF64748B)
+                                        )
+                                        Text(
+                                            text = "Grading: ${cred.gradingSystem}",
+                                            fontSize = 8.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF94A3B8)
+                                        )
+                                    }
+                                }
+                                
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    if (isActive) {
+                                        Box(
+                                            modifier = Modifier
+                                                .background(Color(0xFF4F46E5), RoundedCornerShape(12.dp))
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text("CONTROL ACTIVE", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                        }
+                                    }
+                                    
+                                    IconButton(
+                                        onClick = { showConfirmDeleteUsername = cred.username },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(Icons.Default.Delete, "Delete", tint = Color(0xFFDC2626), modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Floating trigger to enroll new student
+        FloatingActionButton(
+            onClick = { showEnrollDialog = true },
+            containerColor = Color(0xFF4F46E5),
+            contentColor = Color.White,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Default.Add, "Enroll Student")
+        }
+    }
+    
+    // Enroll Dialog
+    if (showEnrollDialog) {
+        AlertDialog(
+            onDismissRequest = { showEnrollDialog = false },
+            title = { Text("Enroll New Student Account", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B)) },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                ) {
+                    OutlinedTextField(
+                        value = enrollUsername,
+                        onValueChange = { enrollUsername = it },
+                        label = { Text("Login Username", fontSize = 10.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 11.sp)
+                    )
+                    OutlinedTextField(
+                        value = enrollPassword,
+                        onValueChange = { enrollPassword = it },
+                        label = { Text("Login Password", fontSize = 10.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 11.sp)
+                    )
+                    OutlinedTextField(
+                        value = enrollName,
+                        onValueChange = { enrollName = it },
+                        label = { Text("Full Student Name", fontSize = 10.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 11.sp)
+                    )
+                    OutlinedTextField(
+                        value = enrollMatric,
+                        onValueChange = { enrollMatric = it },
+                        label = { Text("Matriculation Number", fontSize = 10.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                    )
+                    OutlinedTextField(
+                        value = enrollDept,
+                        onValueChange = { enrollDept = it },
+                        label = { Text("Academic Department", fontSize = 10.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 11.sp)
+                    )
+                    OutlinedTextField(
+                        value = enrollLevel,
+                        onValueChange = { enrollLevel = it },
+                        label = { Text("Current Level (e.g. ND I)", fontSize = 10.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 11.sp)
+                    )
+                    OutlinedTextField(
+                        value = enrollInstitution,
+                        onValueChange = { enrollInstitution = it },
+                        label = { Text("Institution Name", fontSize = 10.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 11.sp)
+                    )
+                    
+                    Column {
+                        Text("Grading Standard System", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            GradingSystem.values().forEach { sys ->
+                                FilterChip(
+                                    selected = enrollSystem == sys,
+                                    onClick = { enrollSystem = sys },
+                                    label = { Text(sys.name, fontSize = 9.sp) }
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (enrollUsername.isNotBlank() && enrollPassword.isNotBlank() && enrollName.isNotBlank()) {
+                            val newCred = com.example.academicportal.model.StudentCredential(
+                                username = enrollUsername.trim(),
+                                password = enrollPassword,
+                                name = enrollName.trim(),
+                                matricNo = enrollMatric.trim().uppercase(),
+                                department = enrollDept.trim(),
+                                level = enrollLevel.trim(),
+                                gradingSystem = enrollSystem,
+                                institution = enrollInstitution.trim()
+                            )
+                            viewModel.addStudent(newCred)
+                            
+                            // Clear form
+                            enrollUsername = ""
+                            enrollPassword = ""
+                            enrollName = ""
+                            enrollMatric = ""
+                            enrollDept = ""
+                            enrollLevel = "ND I"
+                            
+                            showEnrollDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5))
+                ) {
+                    Text("Enroll Portfolio", fontSize = 11.sp, color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEnrollDialog = false }) {
+                    Text("Cancel", fontSize = 11.sp, color = Color(0xFF64748B))
+                }
+            },
+            shape = RoundedCornerShape(12.dp)
+        )
+    }
+    
+    // Confirm Delete Dialog
+    showConfirmDeleteUsername?.let { deleteUser ->
+        val targetStudent = allStudentsList.find { it.username == deleteUser }
+        AlertDialog(
+            onDismissRequest = { showConfirmDeleteUsername = null },
+            title = { Text("Expel Student Account?", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
+            text = {
+                Text(
+                    text = "Are you sure you want to expel ${targetStudent?.name ?: deleteUser} and permanently delete all their recorded semester course results? This action is irreversible.",
+                    fontSize = 11.sp,
+                    color = Color(0xFF475569),
+                    lineHeight = 15.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.removeStudent(deleteUser)
+                        showConfirmDeleteUsername = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626))
+                ) {
+                    Text("Expel & Delete", fontSize = 11.sp, color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmDeleteUsername = null }) {
+                    Text("Cancel", fontSize = 11.sp, color = Color(0xFF64748B))
+                }
+            },
+            shape = RoundedCornerShape(12.dp)
+        )
+    }
+}
+

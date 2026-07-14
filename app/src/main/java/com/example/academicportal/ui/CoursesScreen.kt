@@ -37,7 +37,8 @@ fun CoursesScreen(
     onAddCourse: (String, String, String, Int, Int) -> Unit,
     onDeleteCourse: (String, String) -> Unit,
     onUpdateCourse: (String, String, Int, Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isReadOnly: Boolean = false
 ) {
     val scrollState = rememberScrollState()
     
@@ -62,36 +63,39 @@ fun CoursesScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = if (isReadOnly) Modifier.fillMaxWidth() else Modifier.weight(1f)) {
                 Text(
-                    text = "MANAGE SEMESTER PORTFOLIOS",
+                    text = if (isReadOnly) "OFFICIAL ACADEMIC LEDGER" else "MANAGE SEMESTER PORTFOLIOS",
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
                     color = Color(0xFF1E293B),
                     letterSpacing = 0.5.sp
                 )
                 Text(
-                    text = "Add new terms and click cards below to edit courses & scores",
+                    text = if (isReadOnly) "Certified academic records logged by your designated Exam Officer" else "Add new terms and click cards below to edit courses & scores",
                     fontSize = 11.sp,
                     color = Color(0xFF64748B)
                 )
             }
 
-            Button(
-                onClick = { showAddSemesterDialog = true },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
-                shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                modifier = Modifier.height(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add",
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Add Semester", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            if (!isReadOnly) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = { showAddSemesterDialog = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Add Semester", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
             }
         }
 
@@ -158,31 +162,33 @@ fun CoursesScreen(
                                 }
                             }
 
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                // Add Course Action Button
-                                IconButton(
-                                    onClick = {
-                                        activeSemesterIdForCourse = sem.id
-                                        editingCourse = null
-                                        showCourseDialog = true
-                                    },
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .background(Color.White, RoundedCornerShape(50))
+                            if (!isReadOnly) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Icon(Icons.Default.Add, contentDescription = "Add Course", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
-                                }
+                                    // Add Course Action Button
+                                    IconButton(
+                                        onClick = {
+                                            activeSemesterIdForCourse = sem.id
+                                            editingCourse = null
+                                            showCourseDialog = true
+                                        },
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .background(Color.White, RoundedCornerShape(50))
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = "Add Course", tint = Color(0xFF4F46E5), modifier = Modifier.size(18.dp))
+                                    }
 
-                                // Delete Semester Button
-                                IconButton(
-                                    onClick = { onDeleteSemester(sem.id) },
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .background(Color.White, RoundedCornerShape(50))
-                                ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete Semester", tint = Color(0xFFDC2626), modifier = Modifier.size(18.dp))
+                                    // Delete Semester Button
+                                    IconButton(
+                                        onClick = { onDeleteSemester(sem.id) },
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .background(Color.White, RoundedCornerShape(50))
+                                    ) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete Semester", tint = Color(0xFFDC2626), modifier = Modifier.size(18.dp))
+                                    }
                                 }
                             }
                         }
@@ -305,39 +311,41 @@ fun CoursesScreen(
                                                     }
                                                 }
 
-                                                // Actions
-                                                Row(
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    IconButton(
-                                                        onClick = {
-                                                            activeSemesterIdForCourse = sem.id
-                                                            editingCourse = course
-                                                            showCourseDialog = true
-                                                        },
-                                                        modifier = Modifier.size(32.dp)
+                                                if (!isReadOnly) {
+                                                    // Actions
+                                                    Row(
+                                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
                                                     ) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Edit,
-                                                            contentDescription = "Edit",
-                                                            tint = Color(0xFF4F46E5),
-                                                            modifier = Modifier.size(16.dp)
-                                                        )
-                                                    }
+                                                        IconButton(
+                                                            onClick = {
+                                                                activeSemesterIdForCourse = sem.id
+                                                                editingCourse = course
+                                                                showCourseDialog = true
+                                                            },
+                                                            modifier = Modifier.size(32.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Edit,
+                                                                contentDescription = "Edit",
+                                                                tint = Color(0xFF4F46E5),
+                                                                modifier = Modifier.size(16.dp)
+                                                            )
+                                                        }
 
-                                                    IconButton(
-                                                        onClick = {
-                                                            onDeleteCourse(sem.id, course.id)
-                                                        },
-                                                        modifier = Modifier.size(32.dp)
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Delete,
-                                                            contentDescription = "Delete",
-                                                            tint = Color(0xFFDC2626),
-                                                            modifier = Modifier.size(16.dp)
-                                                        )
+                                                        IconButton(
+                                                            onClick = {
+                                                                onDeleteCourse(sem.id, course.id)
+                                                            },
+                                                            modifier = Modifier.size(32.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Delete,
+                                                                contentDescription = "Delete",
+                                                                tint = Color(0xFFDC2626),
+                                                                modifier = Modifier.size(16.dp)
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
