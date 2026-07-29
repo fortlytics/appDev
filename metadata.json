@@ -1,0 +1,6 @@
+{
+  "name": "Network Coverage Analyzer",
+  "description": "Mobile network signal strength, speed test, location mapping, and coverage analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
